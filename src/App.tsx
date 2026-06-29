@@ -1534,7 +1534,7 @@ export default function App() {
                 <div className="absolute left-0 mt-1 w-56 bg-white border border-slate-100 rounded-xl shadow-lg py-2 z-50 animate-fade-in text-xs font-semibold text-slate-700">
                   {/* Submenu AI TOOL */}
                   <a
-                    href="https://gemini.google.com/share/3ab7daa6e259"
+                    href="https://share.gemini.google/9BI87cZEBkmY"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700 transition"
@@ -4708,7 +4708,7 @@ export default function App() {
                   </span>
                   
                   <a
-                    href="https://gemini.google.com/share/3ab7daa6e259"
+                    href="https://share.gemini.google/9BI87cZEBkmY"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setShowMobileSidebar(false)}
