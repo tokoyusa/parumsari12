@@ -53,6 +53,8 @@ export default function AdminPanel({ currentProfile, appSettings, onRefreshSetti
   const [settingsForm, setSettingsForm] = useState({
     app_name: '',
     logo_url: '',
+    app_icon_url: '',
+    splash_screen_url: '',
     banner_url: '',
     contact_phone: '',
     website_mode: 'active' as AppSetting['website_mode'],
@@ -138,6 +140,8 @@ export default function AdminPanel({ currentProfile, appSettings, onRefreshSetti
       setSettingsForm({
         app_name: appSettings.app_name || 'PASAR UMKM TEGALSARI',
         logo_url: appSettings.logo_url || '',
+        app_icon_url: appSettings.app_icon_url || '',
+        splash_screen_url: appSettings.splash_screen_url || '',
         banner_url: appSettings.banner_url || '',
         contact_phone: appSettings.contact_phone || '6281234567890',
         website_mode: appSettings.website_mode || 'active',
@@ -266,6 +270,8 @@ export default function AdminPanel({ currentProfile, appSettings, onRefreshSetti
       await db.updateAppSettings({
         app_name: settingsForm.app_name,
         logo_url: settingsForm.logo_url,
+        app_icon_url: settingsForm.app_icon_url,
+        splash_screen_url: settingsForm.splash_screen_url,
         banner_url: settingsForm.banner_url,
         contact_phone: settingsForm.contact_phone,
         website_mode: settingsForm.website_mode,
@@ -455,6 +461,40 @@ export default function AdminPanel({ currentProfile, appSettings, onRefreshSetti
       ...prev,
       banners: (prev.banners || []).map(b => b.id === id ? { ...b, [field]: value } : b)
     }));
+  };
+
+  const handleAppIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImage(file, 512, 512, 0.9);
+      setSettingsForm(prev => ({ ...prev, app_icon_url: compressed }));
+    } catch (err) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setSettingsForm(prev => ({ ...prev, app_icon_url: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSplashScreenUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImage(file, 1080, 1920, 0.85);
+      setSettingsForm(prev => ({ ...prev, splash_screen_url: compressed }));
+    } catch (err) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setSettingsForm(prev => ({ ...prev, splash_screen_url: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // --- TEGALSARI PROFILE MANIPULATORS ---
@@ -1388,6 +1428,105 @@ export default function AdminPanel({ currentProfile, appSettings, onRefreshSetti
                   onChange={e => setSettingsForm({ ...settingsForm, banner_url: e.target.value })}
                   className="w-full p-1.5 border border-slate-200 bg-white rounded-lg text-[10.5px]"
                 />
+              </div>
+
+              {/* Gambar Icon PWA & Splash Screen */}
+              <div className="p-4 bg-amber-50/30 border border-amber-100 rounded-2xl space-y-4">
+                <p className="text-xs font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wider font-mono">
+                  📱 Pengaturan Icon Aplikasi & Splash Screen (PWA)
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* App Icon / PWA Icon */}
+                  <div className="space-y-2">
+                    <label className="font-semibold text-gray-700 flex justify-between">
+                      <span>Gambar Icon Aplikasi</span>
+                      <span className="text-[10px] text-emerald-700">Mendukung upload lokal</span>
+                    </label>
+                    
+                    <div className="flex gap-3 items-center">
+                      <div className="w-14 h-14 bg-white border border-slate-200 rounded-xl flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                        {settingsForm.app_icon_url ? (
+                          <img src={settingsForm.app_icon_url} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className="text-[10px] text-slate-400">No Icon</span>
+                        )}
+                      </div>
+                      
+                      <div className="relative flex-1 border-2 border-dashed border-slate-200 bg-white hover:border-emerald-500 rounded-xl p-2.5 text-center transition cursor-pointer group">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAppIconUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <div className="text-[10.5px] text-slate-500 font-medium flex items-center justify-center gap-1">
+                          <UploadCloud className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
+                          <span>Pilih Icon Lokal</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <input
+                      type="text"
+                      placeholder="Atau masukkan URL Icon eksternal..."
+                      value={settingsForm.app_icon_url}
+                      onChange={e => setSettingsForm({ ...settingsForm, app_icon_url: e.target.value })}
+                      className="w-full p-1.5 border border-slate-200 bg-white rounded-lg text-[10.5px]"
+                    />
+                    
+                    <div className="text-[9.5px] text-slate-500 leading-normal space-y-0.5">
+                      <p className="font-semibold text-amber-800">💡 Informasi Spesifikasi Gambar:</p>
+                      <p>• <span className="font-medium">Ukuran Rekomendasi:</span> <span className="font-semibold text-gray-800">512 x 512 piksel</span> (Rasio 1:1, persegi presisi)</p>
+                      <p>• <span className="font-medium">Jenis File:</span> <span className="font-semibold text-gray-800">PNG, JPG, atau SVG</span> (Rekomendasi SVG demi ketajaman di resolusi apa pun)</p>
+                    </div>
+                  </div>
+
+                  {/* Splash Screen */}
+                  <div className="space-y-2">
+                    <label className="font-semibold text-gray-700 flex justify-between">
+                      <span>Splash Screen (Layar Memuat)</span>
+                      <span className="text-[10px] text-emerald-700">Mendukung upload lokal</span>
+                    </label>
+                    
+                    <div className="flex gap-3 items-center">
+                      <div className="w-14 h-14 bg-white border border-slate-200 rounded-xl flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                        {settingsForm.splash_screen_url ? (
+                          <img src={settingsForm.splash_screen_url} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className="text-[10px] text-slate-400">No Splash</span>
+                        )}
+                      </div>
+                      
+                      <div className="relative flex-1 border-2 border-dashed border-slate-200 bg-white hover:border-emerald-500 rounded-xl p-2.5 text-center transition cursor-pointer group">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleSplashScreenUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <div className="text-[10.5px] text-slate-500 font-medium flex items-center justify-center gap-1">
+                          <UploadCloud className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
+                          <span>Pilih Splash Lokal</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <input
+                      type="text"
+                      placeholder="Atau masukkan URL Splash Screen eksternal..."
+                      value={settingsForm.splash_screen_url}
+                      onChange={e => setSettingsForm({ ...settingsForm, splash_screen_url: e.target.value })}
+                      className="w-full p-1.5 border border-slate-200 bg-white rounded-lg text-[10.5px]"
+                    />
+                    
+                    <div className="text-[9.5px] text-slate-500 leading-normal space-y-0.5">
+                      <p className="font-semibold text-amber-800">💡 Informasi Spesifikasi Gambar:</p>
+                      <p>• <span className="font-medium">Ukuran Rekomendasi:</span> <span className="font-semibold text-gray-800">1080 x 1920 piksel</span> (Rasio 9:16 portrait)</p>
+                      <p>• <span className="font-medium">Jenis File:</span> <span className="font-semibold text-gray-800">PNG, JPG, atau SVG</span> (Akan tampil sebagai launch screen saat aplikasi dibuka di HP)</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Category Management */}
