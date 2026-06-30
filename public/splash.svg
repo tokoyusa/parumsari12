@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <!-- Background Gradient: Vibrant lime-green / chartreuse -->
+    <radialGradient id="bgGrad" cx="30%" cy="20%" r="90%" fx="30%" fy="20%">
+      <stop offset="0%" stop-color="#ecff1c" />
+      <stop offset="35%" stop-color="#cbe605" />
+      <stop offset="70%" stop-color="#99b200" />
+      <stop offset="100%" stop-color="#697c00" />
+    </radialGradient>
+
+    <!-- Sunburst Beam Filter/Effects -->
+    <linearGradient id="beamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Premium 3D Gold Gradient for fills -->
+    <linearGradient id="goldFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff6cc" />
+      <stop offset="20%" stop-color="#ffd56b" />
+      <stop offset="40%" stop-color="#dfa824" />
+      <stop offset="60%" stop-color="#966a03" />
+      <stop offset="80%" stop-color="#fcee9d" />
+      <stop offset="100%" stop-color="#c59214" />
+    </linearGradient>
+
+    <!-- Gold Edge/Border Gradient -->
+    <linearGradient id="goldEdge" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#543c00" />
+      <stop offset="30%" stop-color="#a3760b" />
+      <stop offset="70%" stop-color="#ffe98f" />
+      <stop offset="100%" stop-color="#7d5902" />
+    </linearGradient>
+
+    <!-- Deep Drop Shadow for the Gold Elements -->
+    <filter id="logoShadow" x="-30%" y="-15%" width="160%" height="140%">
+      <feDropShadow dx="4" dy="30" stdDeviation="25" flood-color="#2a3300" flood-opacity="0.75" />
+      <feDropShadow dx="2" dy="8" stdDeviation="6" flood-color="#000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1080" height="1920" fill="url(#bgGrad)" />
+
+  <!-- Rays of Light shining from top-left corner -->
+  <g transform="translate(0, 0)">
+    <polygon points="0,0 200,1920 0,1920" fill="url(#beamGrad)" />
+    <polygon points="0,0 500,1920 300,1920" fill="url(#beamGrad)" />
+    <polygon points="0,0 900,1920 700,1920" fill="url(#beamGrad)" />
+    <polygon points="0,0 1080,1600 1080,1300" fill="url(#beamGrad)" />
+    <polygon points="0,0 1080,1000 1080,700" fill="url(#beamGrad)" />
+    <polygon points="0,0 1080,400 1080,200" fill="url(#beamGrad)" />
+  </g>
+
+  <!-- Centered Content Group with Drop Shadow -->
+  <g filter="url(#logoShadow)">
+    
+    <!-- Large Golden "P" Logo (Centered around Y=800) -->
+    <g transform="translate(340, 520) scale(1.1)">
+      
+      <!-- OUTER RIBBON (Stem + Loop) -->
+      <path d="M 138,90 
+               L 245,90 
+               C 245,90 245,90 245,90 
+               L 245,120 
+               L 168,120 
+               L 168,235 
+               C 185,215 210,205 245,205 
+               L 245,235 
+               C 215,235 195,245 180,265 
+               L 180,410 
+               L 138,410 
+               Z" 
+            fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+      <!-- UPPER PARALLEL LOOPS -->
+      <!-- Outer Arc -->
+      <path d="M 215,90 
+               C 315,90 395,165 395,260 
+               C 395,355 315,430 215,430 
+               L 215,395 
+               C 295,395 360,335 360,260 
+               C 360,185 295,125 215,125 
+               Z" 
+            fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+      <!-- Middle Arc -->
+      <path d="M 215,135 
+               C 275,135 320,180 320,240 
+               C 320,300 275,345 215,345 
+               L 215,315 
+               C 255,315 288,285 288,240 
+               C 288,195 255,165 215,165 
+               Z" 
+            fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+      <!-- LOWER STEM FOLDED LOOP -->
+      <path d="M 180,270 
+               L 225,270 
+               L 225,385 
+               L 205,385 
+               L 205,300 
+               L 180,300 
+               Z" 
+            fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+      <!-- THE ELEGANT GRADIENT SWOOSH -->
+      <path d="M 112,318 
+               C 125,290 155,248 205,240 
+               C 265,230 305,185 305,185 
+               C 305,185 285,215 235,242 
+               C 185,269 145,292 124,332 
+               Z" 
+            fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2.5" stroke-linejoin="round" />
+            
+    </g>
+
+    <!-- Text "PARUMSARI" Centered below the logo -->
+    <text x="540" y="1130" 
+          font-family="'Space Grotesk', 'Inter', sans-serif" 
+          font-size="64" 
+          font-weight="900" 
+          letter-spacing="18" 
+          text-anchor="middle" 
+          fill="url(#goldFill)" 
+          stroke="url(#goldEdge)" 
+          stroke-width="1.5">PARUMSARI</text>
+  </g>
+</svg>
