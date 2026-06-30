@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient: Vibrant lime-green / chartreuse -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="75%" fx="40%" fy="30%">
+      <stop offset="0%" stop-color="#e3f914" />
+      <stop offset="45%" stop-color="#c9e208" />
+      <stop offset="85%" stop-color="#99b200" />
+      <stop offset="100%" stop-color="#7c9200" />
+    </radialGradient>
+
+    <!-- Premium 3D Gold Gradient for fills -->
+    <linearGradient id="goldFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff6cc" />
+      <stop offset="20%" stop-color="#ffd56b" />
+      <stop offset="40%" stop-color="#dfa824" />
+      <stop offset="60%" stop-color="#966a03" />
+      <stop offset="80%" stop-color="#fcee9d" />
+      <stop offset="100%" stop-color="#c59214" />
+    </linearGradient>
+
+    <!-- Gold Edge/Border Gradient -->
+    <linearGradient id="goldEdge" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#543c00" />
+      <stop offset="30%" stop-color="#a3760b" />
+      <stop offset="70%" stop-color="#ffe98f" />
+      <stop offset="100%" stop-color="#7d5902" />
+    </linearGradient>
+
+    <!-- Dark Shadow for 3D Depth -->
+    <filter id="logoShadow" x="-20%" y="-10%" width="140%" height="130%">
+      <feDropShadow dx="2" dy="16" stdDeviation="14" flood-color="#3c4700" flood-opacity="0.7" />
+      <feDropShadow dx="1" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- iOS-Style Rounded Square Background -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)" />
+
+  <!-- Subtle Inner White Border Glow -->
+  <rect x="12" y="12" width="488" height="488" rx="103" fill="none" stroke="#fff" stroke-width="2.5" stroke-opacity="0.18" />
+
+  <!-- The "P" Monogram Group with Drop Shadow -->
+  <g filter="url(#logoShadow)" transform="translate(10, 10)">
+    
+    <!-- OUTER RIBBON (Stem + Loop) -->
+    <!-- Starts at top-left stem, goes to top loop, wraps around, and ends at center -->
+    <path d="M 138,90 
+             L 245,90 
+             C 245,90 245,90 245,90 
+             L 245,120 
+             L 168,120 
+             L 168,235 
+             C 185,215 210,205 245,205 
+             L 245,235 
+             C 215,235 195,245 180,265 
+             L 180,410 
+             L 138,410 
+             Z" 
+          fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+    <!-- UPPER PARALLEL LOOPS -->
+    <!-- Outer Arc -->
+    <path d="M 215,90 
+             C 315,90 395,165 395,260 
+             C 395,355 315,430 215,430 
+             L 215,395 
+             C 295,395 360,335 360,260 
+             C 360,185 295,125 215,125 
+             Z" 
+          fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+    <!-- Middle Arc -->
+    <path d="M 215,135 
+             C 275,135 320,180 320,240 
+             C 320,300 275,345 215,345 
+             L 215,315 
+             C 255,315 288,285 288,240 
+             C 288,195 255,165 215,165 
+             Z" 
+          fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+    <!-- LOWER STEM FOLDED LOOP (U-shape loop at the bottom) -->
+    <path d="M 180,270 
+             L 225,270 
+             L 225,385 
+             L 205,385 
+             L 205,300 
+             L 180,300 
+             Z" 
+          fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2" stroke-linejoin="round" />
+
+    <!-- THE ELEGANT GRADIENT SWOOSH (Splits the top loop and bottom vertical leg) -->
+    <!-- It has a sharp left hook, dipping down and swooping beautifully up and right -->
+    <path d="M 112,318 
+             C 125,290 155,248 205,240 
+             C 265,230 305,185 305,185 
+             C 305,185 285,215 235,242 
+             C 185,269 145,292 124,332 
+             Z" 
+          fill="url(#goldFill)" stroke="url(#goldEdge)" stroke-width="2.5" stroke-linejoin="round" />
+
+  </g>
+</svg>
