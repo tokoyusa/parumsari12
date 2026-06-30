@@ -2,7 +2,11 @@ const CACHE_NAME = 'pasar-tegalsari-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/favicon.png'
 ];
 
 // Install Service Worker
