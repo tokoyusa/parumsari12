@@ -1534,7 +1534,7 @@ export default function App() {
                 <div className="absolute left-0 mt-1 w-56 bg-white border border-slate-100 rounded-xl shadow-lg py-2 z-50 animate-fade-in text-xs font-semibold text-slate-700">
                   {/* Submenu AI TOOL */}
                   <a
-                    href="https://share.gemini.google/9BI87cZEBkmY"
+                    href="https://share.gemini.google/ks4rUhynezuU"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700 transition"
@@ -2989,6 +2989,16 @@ export default function App() {
             <h4 className="text-sm font-bold font-display tracking-tight text-emerald-400">Hubungi Pengurus</h4>
             <p className="text-emerald-200">📍 {appSettings?.footer_address || 'Jl. Raya Tegalsari No. 1, Kecamatan Tegalsari, Banyuwangi'}</p>
             <p className="text-emerald-200 font-mono">WhatsApp Admin: +{appSettings?.contact_phone || '6281234567890'}</p>
+          </div>
+        </div>
+
+        {/* COPYRIGHT & VERSION FOOTER */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 mt-8 pt-6 border-t border-emerald-900/60 flex flex-col sm:flex-row items-center justify-between gap-2 font-sans text-[11px] text-emerald-300/80">
+          <div>
+            © 2026 Parumsari v.0.1.02
+          </div>
+          <div className="text-[10px] font-mono text-emerald-400/80">
+            Powered by Yusapedia Labs
           </div>
         </div>
       </footer>
@@ -4708,7 +4718,7 @@ export default function App() {
                   </span>
                   
                   <a
-                    href="https://share.gemini.google/9BI87cZEBkmY"
+                    href="https://share.gemini.google/ks4rUhynezuU"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setShowMobileSidebar(false)}
