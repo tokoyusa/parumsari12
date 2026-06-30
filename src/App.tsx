@@ -111,6 +111,7 @@ export default function App() {
   const [upgradePayStatus, setUpgradePayStatus] = useState<'unpaid' | 'pending' | 'paid'>('unpaid');
   const [upgradeActivePayment, setUpgradeActivePayment] = useState<any | null>(null);
   const [upgradeChecking, setUpgradeChecking] = useState<boolean>(false);
+  const [pendingUpgrade, setPendingUpgrade] = useState<{order_id: string; amount: number; target_tier: string} | null>(null);
 
   // PWA (Progressive Web App) states
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -805,6 +806,58 @@ export default function App() {
     };
   }, [vendorMembActivePayment, vendorMembPayStatus]);
 
+  // Check and process pending Pakasir upgrades on mount and periodically
+  useEffect(() => {
+    if (!currentProfile) return;
+
+    const checkPendingUpgrade = async () => {
+      const pendingStr = localStorage.getItem('pasar_tegalsari_pending_upgrade');
+      if (!pendingStr) {
+        setPendingUpgrade(null);
+        return;
+      }
+
+      try {
+        const pending = JSON.parse(pendingStr);
+        setPendingUpgrade(pending);
+
+        if (pending && pending.order_id && pending.amount && pending.target_tier) {
+          const completed = await handleCheckPakasirStatus(pending.order_id, pending.amount);
+          if (completed) {
+            // Update vendor in database
+            await db.updateVendor(currentProfile.id, {
+              membership_tier: pending.target_tier.toUpperCase() as any,
+              memb_pay_method: 'pakasir',
+              memb_pay_status: 'paid'
+            });
+
+            // Clear localStorage
+            localStorage.removeItem('pasar_tegalsari_pending_upgrade');
+            setPendingUpgrade(null);
+
+            setUiMessage({ 
+              text: `Selamat! Pembayaran Upgrade Anda telah terverifikasi secara otomatis oleh sistem Pakasir. Keanggotaan Anda berhasil ditingkatkan menjadi ${pending.target_tier.toUpperCase()}.`, 
+              type: 'success' 
+            });
+            setTimeout(() => setUiMessage(null), 10000);
+
+            // Reload profile data
+            loadAppMetadata();
+          }
+        }
+      } catch (err) {
+        console.error('Error verifying pending upgrade:', err);
+      }
+    };
+
+    // Check immediately
+    checkPendingUpgrade();
+
+    // Also check every 4 seconds
+    const intervalId = setInterval(checkPendingUpgrade, 4000);
+    return () => clearInterval(intervalId);
+  }, [currentProfile]);
+
 
 
   // Affiliate context
@@ -1097,37 +1150,66 @@ export default function App() {
         alert("⚠️ PEMBAYARAN: Anda wajib mengunggah bukti transfer manual terlebih dahulu!");
         return;
       }
-    } else {
-      if (upgradePayStatus !== 'paid') {
-        alert("⚠️ PEMBAYARAN: Silakan selesaikan pembayaran QRIS Pakasir terlebih dahulu sampai berstatus 'LUNAS / PAID'!");
-        return;
+
+      try {
+        await db.updateVendor(currentProfile.id, {
+          membership_tier: upgradeTargetTier.toUpperCase() as any,
+          memb_pay_method: 'transfer_manual',
+          memb_pay_status: 'pending',
+          memb_pay_proof: upgradePayProof
+        });
+
+        setUiMessage({ 
+          text: 'Pengajuan upgrade keanggotaan berhasil dikirim! Menunggu verifikasi bukti transfer oleh Admin.', 
+          type: 'success' 
+        });
+        
+        setShowUpgradePanel(false);
+        setUpgradePayProof('');
+        setUpgradePayStatus('unpaid');
+        setUpgradeActivePayment(null);
+        
+        // Reload app metadata & vendor session
+        loadAppMetadata();
+      } catch (err: any) {
+        alert("Gagal melakukan upgrade keanggotaan: " + err.message);
       }
-    }
+    } else {
+      // Direct Pakasir Redirection
+      try {
+        const targetPrice = upgradeTargetTier === 'premium' 
+          ? (appSettings?.membership_settings?.premium?.price ?? 50000) 
+          : (appSettings?.membership_settings?.vip?.price ?? 150000);
+        const upgradeOrderId = `UPGRADE_${currentProfile.id}_${upgradeTargetTier.toUpperCase()}_${Date.now()}`;
+        
+        setUiMessage({ text: "Menghubungkan ke gateway Pakasir...", type: "success" });
+        
+        const data = await handleCreatePakasirTransaction('qris', upgradeOrderId, targetPrice);
+        if (data && data.payment) {
+          // Save to localStorage so we can track and verify when they return
+          localStorage.setItem('pasar_tegalsari_pending_upgrade', JSON.stringify({
+            order_id: upgradeOrderId,
+            amount: targetPrice,
+            target_tier: upgradeTargetTier
+          }));
+          
+          const project = appSettings?.pakasir_merchant_id || appSettings?.pakasir_project_name || 'pasar-tegalsari';
+          const redirectUrl = window.location.origin + '/?tab=profil';
+          const payUrl = `https://app.pakasir.com/pay/${project}/${Math.round(targetPrice)}?order_id=${upgradeOrderId}&redirect=${encodeURIComponent(redirectUrl)}&qris_only=1`;
 
-    try {
-      await db.updateVendor(currentProfile.id, {
-        membership_tier: upgradeTargetTier.toUpperCase() as any,
-        memb_pay_method: upgradePayMethod,
-        memb_pay_status: upgradePayMethod === 'transfer_manual' ? 'pending' : 'paid',
-        memb_pay_proof: upgradePayProof
-      });
+          setShowUpgradePanel(false);
+          setUpgradePayProof('');
+          setUpgradePayStatus('unpaid');
+          setUpgradeActivePayment(null);
 
-      setUiMessage({ 
-        text: upgradePayMethod === 'transfer_manual' 
-          ? 'Pengajuan upgrade keanggotaan berhasil dikirim! Menunggu verifikasi bukti transfer oleh Admin.' 
-          : 'Selamat! Keanggotaan Anda berhasil ditingkatkan secara instan menjadi ' + upgradeTargetTier.toUpperCase() + '.', 
-        type: 'success' 
-      });
-      
-      setShowUpgradePanel(false);
-      setUpgradePayProof('');
-      setUpgradePayStatus('unpaid');
-      setUpgradeActivePayment(null);
-      
-      // Reload app metadata & vendor session
-      loadAppMetadata();
-    } catch (err: any) {
-      alert("Gagal melakukan upgrade keanggotaan: " + err.message);
+          // Redirect browser to Pakasir Cashier/Payment checkout page
+          window.location.href = payUrl;
+        } else {
+          alert('Gagal menghubungi Pakasir Gateway. Silakan hubungi admin atau gunakan transfer manual.');
+        }
+      } catch (err: any) {
+        alert('Gagal memproses pembayaran Pakasir: ' + err.message);
+      }
     }
   };
 
@@ -2029,7 +2111,7 @@ export default function App() {
                     <Sparkles className="w-3.5 h-3.5" /> Jadi Vendor & Jual Produk
                   </button>
                 ) : (
-                  currentUserVendor.membership_tier !== 'VIP' && !showUpgradePanel && (
+                  currentUserVendor.membership_tier !== 'VIP' && !showUpgradePanel && !pendingUpgrade && (
                     <button
                       type="button"
                       onClick={() => {
@@ -2054,6 +2136,95 @@ export default function App() {
                   <div>Tipe Toko: <strong>Dukuh {currentUserVendor.village}</strong></div>
                   <div>Sistem Pengiriman: <strong>{currentUserVendor.shipping_engine === 'smartengine' ? 'Smart-Engine' : 'Sistem Manual'}</strong></div>
                   <div>Limit Produk: <strong>{currentUserVendor.membership_tier === 'VIP' ? 'Tak Terbatas' : currentUserVendor.membership_tier === 'PREMIUM' ? '25 Produk' : '5 Produk'}</strong></div>
+                </div>
+              )}
+
+              {/* PENDING UPGRADE CARD */}
+              {pendingUpgrade && currentUserVendor && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                      <span className="relative flex h-5 w-5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-5 w-5 bg-amber-500 flex items-center justify-center text-[10px] text-white font-bold">⏳</span>
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider font-mono">Menunggu Pembayaran Pakasir</h4>
+                      <p className="text-[11px] text-amber-700 mt-0.5">Upgrade Keanggotaan ke <strong className="uppercase">{pendingUpgrade.target_tier}</strong> sedang diproses.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded-xl border border-amber-150 text-xs text-slate-700 font-mono space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Invoice ID:</span>
+                      <span className="font-bold">#{pendingUpgrade.order_id}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Total Tagihan:</span>
+                      <span className="font-bold text-emerald-700">Rp {pendingUpgrade.amount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Status Pembayaran:</span>
+                      <span className="font-bold text-amber-600 flex items-center gap-1">
+                        PENDING
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <a
+                      href={`https://app.pakasir.com/pay/${appSettings?.pakasir_merchant_id || appSettings?.pakasir_project_name || 'pasar-tegalsari'}/${Math.round(pendingUpgrade.amount)}?order_id=${pendingUpgrade.order_id}&redirect=${encodeURIComponent(window.location.origin + '/?tab=profil')}&qris_only=1`}
+                      className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-xl text-center text-xs transition shadow-sm cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      Lanjutkan Pembayaran 💳
+                    </a>
+                    <button
+                      type="button"
+                      disabled={upgradeChecking}
+                      onClick={async () => {
+                        setUpgradeChecking(true);
+                        try {
+                          const completed = await handleCheckPakasirStatus(pendingUpgrade.order_id, pendingUpgrade.amount);
+                          if (completed) {
+                            await db.updateVendor(currentProfile.id, {
+                              membership_tier: pendingUpgrade.target_tier.toUpperCase() as any,
+                              memb_pay_method: 'pakasir',
+                              memb_pay_status: 'paid'
+                            });
+                            localStorage.removeItem('pasar_tegalsari_pending_upgrade');
+                            setPendingUpgrade(null);
+                            setUiMessage({ 
+                              text: `Selamat! Keanggotaan Anda berhasil ditingkatkan menjadi ${pendingUpgrade.target_tier.toUpperCase()}.`, 
+                              type: 'success' 
+                            });
+                            loadAppMetadata();
+                          } else {
+                            alert('Pembayaran belum terdeteksi. Silakan selesaikan pembayaran terlebih dahulu.');
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        } finally {
+                          setUpgradeChecking(false);
+                        }
+                      }}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition cursor-pointer"
+                    >
+                      {upgradeChecking ? 'Mengecek...' : 'Cek Pembayaran ✓'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Apakah Anda yakin ingin membatalkan transaksi upgrade keanggotaan ini?')) {
+                          localStorage.removeItem('pasar_tegalsari_pending_upgrade');
+                          setPendingUpgrade(null);
+                        }
+                      }}
+                      className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+                    >
+                      Batalkan
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -2152,142 +2323,27 @@ export default function App() {
                   </div>
 
                   {upgradePayMethod === 'pakasir' ? (
-                    <div className="space-y-3 p-3 bg-slate-50 border border-slate-150 rounded-xl text-center">
-                      {!upgradeActivePayment ? (
-                        <div className="space-y-2 py-1">
-                          <p className="text-[10px] text-slate-500">Sistem akan otomatis membuat kode pembayaran QRIS menggunakan Pakasir Gateway.</p>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                const targetPrice = upgradeTargetTier === 'premium' 
-                                  ? (appSettings?.membership_settings?.premium?.price ?? 50000) 
-                                  : (appSettings?.membership_settings?.vip?.price ?? 150000);
-                                const upgradeOrderId = `UPGRADE_${currentProfile.id}_${Date.now()}`;
-                                
-                                const data = await handleCreatePakasirTransaction('qris', upgradeOrderId, targetPrice);
-                                if (data && data.payment) {
-                                  setUpgradeActivePayment({
-                                    ...data.payment,
-                                    order_id: upgradeOrderId,
-                                    original_amount: targetPrice
-                                  });
-                                  setUpgradePayStatus('unpaid');
-                                } else {
-                                  alert('Gagal menghubungi Pakasir.');
-                                }
-                              } catch (err: any) {
-                                alert('Gagal membuat pembayaran: ' + err.message);
-                              }
-                            }}
-                            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg text-xs transition cursor-pointer"
-                          >
-                            Buat Kode Pembayaran QRIS
-                          </button>
+                    <div className="space-y-2.5 p-4 bg-slate-50 border border-slate-150 rounded-xl text-center">
+                      <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-emerald-800">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Pakasir QRIS Gateway Aktif
+                      </div>
+                      <p className="text-[10px] text-slate-500 leading-relaxed max-w-xs mx-auto">
+                        Anda akan dialihkan ke halaman resmi Kasir Pakasir untuk menyelesaikan pembayaran via QRIS secara aman dan otomatis. Keanggotaan Anda akan langsung aktif setelah pembayaran sukses.
+                      </p>
+                      <div className="p-2.5 bg-white border border-slate-150 rounded-lg text-xs text-slate-700 space-y-1 font-mono text-left max-w-xs mx-auto">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Upgrade ke:</span>
+                          <span className="font-bold text-slate-900 uppercase">{upgradeTargetTier}</span>
                         </div>
-                      ) : (
-                        <div className="flex flex-col items-center space-y-3 py-1">
-                          <div className="bg-white p-2 border rounded-lg">
-                            <img
-                              referrerPolicy="no-referrer"
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upgradeActivePayment.payment_number)}`}
-                              alt="Upgrade QRIS"
-                              className="w-28 h-28"
-                            />
-                          </div>
-
-                          <div className="text-[9.5px] text-slate-500 leading-relaxed max-w-xs">
-                            Pindai QRIS di atas dengan e-wallet atau aplikasi m-banking pilihan Anda.
-                          </div>
-
-                          {/* Direct official link button fallback */}
-                          <div className="w-full">
-                            <a
-                              href={`https://app.pakasir.com/pay/${appSettings?.pakasir_merchant_id || appSettings?.pakasir_project_name || 'pasar-tegalsari'}/${Math.round(upgradeActivePayment.original_amount || upgradeActivePayment.amount)}?order_id=${upgradeActivePayment.order_id}&redirect=${encodeURIComponent(window.location.origin + '/?tab=profil')}&qris_only=1`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full py-1.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center text-[10px]"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                              Bayar via Halaman Resmi (Rekomendasi)
-                            </a>
-                          </div>
-
-                          <div className="bg-white p-2.5 border rounded-lg w-full text-xs text-slate-700 space-y-1 text-left font-mono">
-                            <div className="flex justify-between">
-                              <span className="text-slate-500">Invoice ID:</span>
-                              <span className="font-bold">#{upgradeActivePayment.order_id}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-slate-500">Jumlah:</span>
-                              <span className="font-bold">Rp {upgradeActivePayment.original_amount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-slate-500">Status Bayar:</span>
-                              <span className={`font-bold ${upgradePayStatus === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                {upgradePayStatus === 'paid' ? 'LUNAS / PAID' : 'PENDING'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Simulation & check buttons */}
-                          <div className="grid grid-cols-2 gap-2 w-full">
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  if (!isSupabaseConfigured) {
-                                    setUpgradePayStatus('paid');
-                                    alert('Simulasi pembayaran upgrade sukses (Mode Lokal)!');
-                                  } else {
-                                    const apiKey = appSettings?.pakasir_api_key || 'rE24cpoGsJwlDvQ3AnFMRX9SgZsGaVDE';
-                                    const project = appSettings?.pakasir_merchant_id || appSettings?.pakasir_project_name || 'pasar-tegalsari';
-                                    await fetch('/api/pakasir/simulate', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({
-                                        order_id: upgradeActivePayment.order_id,
-                                        amount: upgradeActivePayment.original_amount,
-                                        project,
-                                        api_key: apiKey
-                                      })
-                                    });
-                                    alert('Simulasi pembayaran upgrade dikirim! Silakan klik "Cek Pembayaran".');
-                                  }
-                                } catch (err: any) {
-                                  alert(err.message);
-                                }
-                              }}
-                              className="py-1 px-2.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold rounded text-[10px] cursor-pointer"
-                            >
-                              Simulasi Bayar
-                            </button>
-                            <button
-                              type="button"
-                              disabled={upgradeChecking}
-                              onClick={async () => {
-                                setUpgradeChecking(true);
-                                try {
-                                  const completed = await handleCheckPakasirStatus(upgradeActivePayment.order_id, upgradeActivePayment.original_amount);
-                                  if (completed) {
-                                    setUpgradePayStatus('paid');
-                                    alert('Pembayaran sukses terverifikasi! Klik "Kirim Upgrade" di bawah untuk menyimpan perubahan.');
-                                  } else {
-                                    alert('Pembayaran belum diterima. Coba beberapa saat lagi.');
-                                  }
-                                } catch (err) {
-                                  console.error(err);
-                                } finally {
-                                  setUpgradeChecking(false);
-                                }
-                              }}
-                              className="py-1 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[10px] cursor-pointer"
-                            >
-                              {upgradeChecking ? 'Mengecek...' : 'Cek Pembayaran'}
-                            </button>
-                          </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Total Biaya:</span>
+                          <span className="font-bold text-emerald-600">Rp {(upgradeTargetTier === 'premium' ? (appSettings?.membership_settings?.premium?.price ?? 50000) : (appSettings?.membership_settings?.vip?.price ?? 150000)).toLocaleString()}</span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-3 p-3 bg-slate-50 border border-slate-150 rounded-xl">
@@ -2354,9 +2410,13 @@ export default function App() {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-xs shadow cursor-pointer"
+                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-xs shadow cursor-pointer flex items-center gap-1.5"
                     >
-                      Kirim Upgrade Keanggotaan✓
+                      {upgradePayMethod === 'pakasir' ? (
+                        <>Lanjutkan ke Pembayaran 💳</>
+                      ) : (
+                        <>Kirim Upgrade Keanggotaan ✓</>
+                      )}
                     </button>
                   </div>
                 </form>
