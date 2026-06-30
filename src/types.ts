@@ -160,6 +160,8 @@ export interface AppSetting {
   website_mode: 'active' | 'maintenance';
   announcement: string;
   about_us: string;
+  app_icon_url?: string;
+  splash_screen_url?: string;
   tegalsari_profile?: TegalsariProfile;
   about_us_welcome_heading?: string;
   about_us_welcome_text?: string;
