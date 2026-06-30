@@ -119,6 +119,89 @@ export default function App() {
 
   // Global App settings and catalog state
   const [appSettings, setAppSettings] = useState<AppSetting | null>(null);
+
+  // Synchronize app icon, splash screen, and PWA manifest dynamically
+  useEffect(() => {
+    if (appSettings) {
+      // Dynamic app icon
+      const iconUrl = appSettings.app_icon_url || '/icon.svg';
+      
+      const linkIcon = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      if (linkIcon) {
+        linkIcon.href = iconUrl;
+      } else {
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/svg+xml';
+        link.href = iconUrl;
+        document.head.appendChild(link);
+      }
+
+      const appleIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+      if (appleIcon) {
+        appleIcon.href = iconUrl;
+      } else {
+        const link = document.createElement('link');
+        link.rel = 'apple-touch-icon';
+        link.href = iconUrl;
+        document.head.appendChild(link);
+      }
+
+      // Dynamic splash screen
+      const splashUrl = appSettings.splash_screen_url || '/splash.svg';
+      const appleSplash = document.querySelector("link[rel='apple-touch-startup-image']") as HTMLLinkElement;
+      if (appleSplash) {
+        appleSplash.href = splashUrl;
+      } else {
+        const link = document.createElement('link');
+        link.rel = 'apple-touch-startup-image';
+        link.href = splashUrl;
+        document.head.appendChild(link);
+      }
+
+      // Dynamic manifest
+      const baseManifest = {
+        name: appSettings.app_name || "PASAR UMKM TEGALSARI",
+        short_name: appSettings.app_name || "PASAR UMKM TEGALSARI",
+        description: "Marketplace Multivendor UMKM Desa Tegalsari, Kabupaten Batang",
+        icons: [
+          {
+            src: appSettings.app_icon_url || "/icon.svg",
+            sizes: "192x192",
+            type: appSettings.app_icon_url?.startsWith('data:image/svg') || !appSettings.app_icon_url ? "image/svg+xml" : "image/png",
+            purpose: "any maskable"
+          },
+          {
+            src: appSettings.app_icon_url || "/icon.svg",
+            sizes: "512x512",
+            type: appSettings.app_icon_url?.startsWith('data:image/svg') || !appSettings.app_icon_url ? "image/svg+xml" : "image/png",
+            purpose: "any maskable"
+          },
+          {
+            src: appSettings.app_icon_url || "/icon.svg",
+            sizes: "any",
+            type: appSettings.app_icon_url?.startsWith('data:image/svg') || !appSettings.app_icon_url ? "image/svg+xml" : "image/png",
+            purpose: "any maskable"
+          }
+        ],
+        start_url: "/",
+        background_color: "#cbe605",
+        theme_color: "#cbe605",
+        display: "standalone",
+        orientation: "portrait"
+      };
+      
+      const stringManifest = JSON.stringify(baseManifest);
+      const blob = new Blob([stringManifest], {type: 'application/json'});
+      const manifestURL = URL.createObjectURL(blob);
+      
+      const linkManifest = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
+      if (linkManifest) {
+        linkManifest.href = manifestURL;
+      }
+    }
+  }, [appSettings]);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [approvedVendors, setApprovedVendors] = useState<Vendor[]>([]);
   const [allCouriers, setAllCouriers] = useState<Courier[]>([]);
