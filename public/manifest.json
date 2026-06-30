@@ -4,19 +4,27 @@
   "description": "Marketplace Multivendor UMKM Desa Tegalsari, Kabupaten Batang",
   "icons": [
     {
-      "src": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=192",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=512",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#10b981",
-  "theme_color": "#10b981",
+  "background_color": "#cbe605",
+  "theme_color": "#cbe605",
   "display": "standalone",
   "orientation": "portrait"
 }
