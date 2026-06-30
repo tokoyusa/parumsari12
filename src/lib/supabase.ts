@@ -28,7 +28,7 @@ console.log(
 const INITIAL_SETTINGS: AppSetting = {
   id: 'global_settings',
   app_name: 'PASAR UMKM TEGALSARI',
-  logo_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=200',
+  logo_url: '/icon.svg',
   banner_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1200',
   contact_phone: '6281234567890',
   website_mode: 'active',
