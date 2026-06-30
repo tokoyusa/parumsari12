@@ -1,5 +1,10 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useEffect } from 'react';
-import { ArrowDownToLine, Check, X } from 'lucide-react';
+import { ArrowDownToLine, Monitor, Smartphone, Check, X } from 'lucide-react';
 
 export default function PWAInstaller() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -7,39 +12,29 @@ export default function PWAInstaller() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    // 1. Check if already installed
+    // Check if app is running in standalone mode (already installed)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone 
       || document.referrer.includes('android-app://');
     
-    const isSuccessInstalled = localStorage.getItem('pwa_installed_success') === 'true';
-
-    if (isStandalone || isSuccessInstalled) {
+    if (isStandalone) {
       setIsInstalled(true);
       return;
     }
 
-    // 2. Listen for the native beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault();
-      // Stash the event so it can be triggered later.
+      // Store event so we can trigger it later
       setDeferredPrompt(e);
-      // Only show the banner if the user hasn't dismissed it in this session
-      const isDismissed = sessionStorage.getItem('pwa_banner_dismissed') === 'true';
-      if (!isDismissed) {
-        setShowBanner(true);
-      }
+      setShowBanner(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // 3. Listen for successful installation
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
       setShowBanner(false);
       setDeferredPrompt(null);
-      localStorage.setItem('pwa_installed_success', 'true');
       console.log('PASAR UMKM Tegalsari PWA berhasil diinstal!');
     });
 
@@ -51,66 +46,48 @@ export default function PWAInstaller() {
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     
-    // Show the native browser installation prompt directly!
+    // Show the native PWA install prompt
     deferredPrompt.prompt();
     
-    // Wait for the user to respond to the prompt
+    // Wait for user preference response
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User choice outcome: ... ${outcome}`);
+    console.log(`User response to installation prompt: ${outcome}`);
     
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-      localStorage.setItem('pwa_installed_success', 'true');
-    }
-    
-    // Reset deferred prompt and hide banner
+    // Reset deferred prompt
     setDeferredPrompt(null);
     setShowBanner(false);
   };
 
-  const handleDismiss = () => {
-    setShowBanner(false);
-    sessionStorage.setItem('pwa_banner_dismissed', 'true');
-  };
+  if (isInstalled) {
+    return null;
+  }
 
-  if (isInstalled || !showBanner) {
+  if (!showBanner) {
     return null;
   }
 
   return (
-    <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-lg border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-300">
+    <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-lg border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        {/* Golden P Logo with live fallback */}
-        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0 overflow-hidden relative border border-amber-400">
-          <img 
-            src="/icon-192.png" 
-            alt="Pasar Tegalsari" 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/icon.svg';
-            }}
-          />
+        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+          <ArrowDownToLine className="w-5 h-5 text-amber-300 animate-bounce" />
         </div>
-        <div className="space-y-0.5 text-center sm:text-left font-sans">
-          <h4 className="font-bold text-sm font-display tracking-tight text-white flex items-center gap-1.5 justify-center sm:justify-start">
-            <span>Pasang Aplikasi Pasar Tegalsari</span>
-            <span className="bg-amber-400 text-emerald-950 font-bold text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider">PWA</span>
-          </h4>
-          <p className="text-[10px] text-emerald-100 max-w-md">Dapatkan akses langsung dari layar HP Anda dengan sekali klik! Lebih cepat, ringan, & hemat kuota.</p>
+        <div className="space-y-0.5 text-center sm:text-left">
+          <h4 className="font-bold text-sm font-display tracking-tight">Pasang Aplikasi Pasar Tegalsari</h4>
+          <p className="text-[10px] text-emerald-100">Dapatkan akses instan, loading super ringan, dan gunakan seperti aplikasi seluler asli!</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
         <button
           onClick={handleInstallClick}
-          className="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
+          className="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
         >
-          <ArrowDownToLine className="w-4 h-4 text-emerald-950 animate-bounce" /> Pasang Aplikasi
+          <Monitor className="w-3.5 h-3.5" /> Pasang PWA
         </button>
         <button
-          onClick={handleDismiss}
-          className="p-2 hover:bg-white/10 rounded-lg text-emerald-100 cursor-pointer"
-          title="Sembunyikan"
+          onClick={() => setShowBanner(false)}
+          className="p-2 hover:bg-white/10 rounded-lg text-emerald-100"
         >
           <X className="w-4 h-4" />
         </button>
