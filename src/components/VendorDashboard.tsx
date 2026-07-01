@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../lib/supabase';
 import { UserProfile, Vendor, Product, Courier, AffiliateRelation, CommissionSetting } from '../types';
 import { compressImage } from '../lib/imageCompressor';
-import { Plus, Edit2, Trash2, Check, X, Shield, Award, Users, Percent, Truck, PlusCircle, AlertCircle, ShoppingBag, Landmark, UploadCloud, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, Shield, Award, Users, Percent, Truck, PlusCircle, AlertCircle, ShoppingBag, Landmark, UploadCloud, Package, Image as ImageIcon } from 'lucide-react';
 
 interface VendorDashboardProps {
   currentProfile: UserProfile;
@@ -1040,37 +1040,45 @@ export default function VendorDashboard({ currentProfile, onRefreshProfile }: Ve
 
           {/* Product form Modal overlay */}
           {showProductModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-              <div className="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto space-y-4">
-                <div className="flex justify-between items-center border-b border-gray-200 pb-3">
-                  <h3 className="font-bold text-gray-900 font-display text-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 md:p-4">
+              <div className="bg-white rounded-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] sm:max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl border border-slate-100 transition-all">
+                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                  <h3 className="font-bold text-gray-900 font-display text-base flex items-center gap-2">
+                    <span className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <ImageIcon className="w-4 h-4" />
+                    </span>
                     {editingProduct ? 'Edit Informasi Produk' : 'Tambah Produk Baru'}
                   </h3>
-                  <button onClick={() => setShowProductModal(false)} className="text-gray-400 hover:text-gray-600">
-                    <X className="w-4 h-4" />
+                  <button 
+                    onClick={() => setShowProductModal(false)} 
+                    className="p-1.5 rounded-full hover:bg-slate-100 text-gray-400 hover:text-gray-600 transition"
+                  >
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <form onSubmit={handleSaveProduct} className="space-y-3.5 text-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Nama Produk */}
                     <div className="space-y-1 sm:col-span-2">
-                      <label className="font-semibold text-gray-700">Nama Produk Rekomendasi</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Nama Produk Rekomendasi</label>
                       <input
                         type="text"
                         required
                         placeholder="Contoh: Kripik Singkong Daun Jeruk 250gr"
                         value={productForm.name}
                         onChange={e => setProductForm({ ...productForm, name: e.target.value })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
+                    {/* Kategori */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-gray-700">Kategori</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Kategori</label>
                       <select
                         value={productForm.category}
                         onChange={e => setProductForm({ ...productForm, category: e.target.value })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-white"
                       >
                         {categoriesToUse.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -1078,82 +1086,94 @@ export default function VendorDashboard({ currentProfile, onRefreshProfile }: Ve
                       </select>
                     </div>
 
+                    {/* Merek */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-gray-700">Merek Produk</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Merek Produk</label>
                       <input
                         type="text"
                         placeholder="Contoh: Bu Siti"
                         value={productForm.brand}
                         onChange={e => setProductForm({ ...productForm, brand: e.target.value })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
+                    {/* Harga Normal */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-gray-700">Harga Normal (Rp)</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Harga Normal (Rp)</label>
                       <input
                         type="number"
                         required
                         placeholder="Masukkan harga normal"
                         value={productForm.price || ''}
                         onChange={e => setProductForm({ ...productForm, price: Number(e.target.value) })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
+                    {/* Harga Diskon */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-gray-700">Harga Diskon (Rp) / Opsional</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Harga Diskon (Rp) / Opsional</label>
                       <input
                         type="number"
                         placeholder="Lebih rendah dari harga biasa"
                         value={productForm.discount_price}
                         onChange={e => setProductForm({ ...productForm, discount_price: e.target.value === '' ? '' : Number(e.target.value) })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
+                    {/* Berat */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-gray-700">Berat Produk (Gram)</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Berat Produk (Gram)</label>
                       <input
                         type="number"
                         required
                         placeholder="Contoh: 250"
                         value={productForm.weight || ''}
                         onChange={e => setProductForm({ ...productForm, weight: Number(e.target.value) })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
+                    {/* Stok */}
                     <div className="space-y-1">
-                      <label className="font-semibold text-gray-700">Jumlah Stok</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Jumlah Stok</label>
                       <input
                         type="number"
                         required
                         placeholder="Contoh: 50"
                         value={productForm.stock || ''}
                         onChange={e => setProductForm({ ...productForm, stock: Number(e.target.value) })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
-                    <div className="space-y-1.5 sm:col-span-2">
-                      <label className="font-semibold text-gray-705 flex justify-between">
+                    {/* Gambar Produk */}
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="flex justify-between items-center text-[11px] font-semibold text-gray-700 uppercase tracking-wider">
                         <span>Gambar Produk</span>
-                        <span className="text-[10px] text-emerald-600">Bisa upload file lokal</span>
+                        <span className="text-[10px] text-emerald-600 font-medium normal-case">Bisa upload file lokal</span>
                       </label>
-                      <div className="flex gap-2.5 items-center bg-gray-50/50 p-2 rounded-xl border border-gray-150">
-                        {productForm.image_url && (
-                          <img src={productForm.image_url} alt="Preview Produk" className="w-12 h-12 rounded-lg object-cover shrink-0 border border-slate-200" referrerPolicy="no-referrer" />
+                      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        {productForm.image_url ? (
+                          <div className="w-14 h-14 rounded-lg bg-white overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center self-center sm:self-auto">
+                            <img src={productForm.image_url} alt="Preview Produk" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 rounded-lg bg-slate-100 shrink-0 border border-slate-200 flex items-center justify-center text-[10px] text-slate-400 font-mono self-center sm:self-auto">
+                            No Image
+                          </div>
                         )}
-                        <div className="relative flex-1 border-2 border-dashed border-gray-300 bg-white hover:border-emerald-500 rounded-xl p-2.5 text-center transition cursor-pointer group">
+                        <div className="relative flex-1 min-h-[42px] border-2 border-dashed border-slate-300 bg-white hover:border-emerald-500 rounded-xl p-2 text-center transition cursor-pointer group flex items-center justify-center">
                           <input
                             type="file"
                             accept="image/*"
                             onChange={e => handleLocalImageUpload(e, (base64) => setProductForm(v => ({ ...v, image_url: base64 })))}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                           />
-                          <div className="text-[10px] text-slate-500 font-medium flex items-center justify-center gap-1.5">
-                            <UploadCloud className="w-4.5 h-4.5 text-slate-450 group-hover:text-emerald-600" />
+                          <div className="text-[10.5px] text-slate-500 font-medium flex items-center justify-center gap-1.5">
+                            <UploadCloud className="w-4.5 h-4.5 text-slate-400 group-hover:text-emerald-600 transition" />
                             <span>Ambil Foto / Pilih Berkas Lokal</span>
                           </div>
                         </div>
@@ -1163,85 +1183,88 @@ export default function VendorDashboard({ currentProfile, onRefreshProfile }: Ve
                         placeholder="Atau masukkan URL Foto luar..."
                         value={productForm.image_url}
                         onChange={e => setProductForm({ ...productForm, image_url: e.target.value })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
+                    {/* Varian */}
                     <div className="space-y-1 sm:col-span-2">
-                      <label className="font-semibold text-gray-700">Varian Produk (Dipisah tanda koma)</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Varian Produk (Dipisah tanda koma)</label>
                       <input
                         type="text"
                         placeholder="Contoh: Manis, Pedas, Original"
                         value={productForm.variantsString}
                         onChange={e => setProductForm({ ...productForm, variantsString: e.target.value })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
 
-                    <div className="p-3 bg-emerald-50 rounded-xl space-y-2 sm:col-span-2 border border-emerald-100">
-                      <p className="font-bold text-emerald-950 text-[10px] uppercase tracking-wider flex items-center gap-1">
-                        <Award className="w-3.5 h-3.5 text-emerald-600" /> Regulasi & Sertifikasi Keamanan Pangan
+                    {/* Regulasi */}
+                    <div className="p-3.5 bg-emerald-50/50 rounded-xl space-y-3 sm:col-span-2 border border-emerald-100">
+                      <p className="font-bold text-emerald-950 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                        <Award className="w-4 h-4 text-emerald-600" /> Regulasi & Sertifikasi Keamanan Pangan
                       </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div className="space-y-0.5">
-                          <label className="text-[10px] text-emerald-800 font-semibold">Ijin P-IRT</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="block text-[10px] text-emerald-800 font-semibold uppercase tracking-wider">Ijin P-IRT</label>
                           <input
                             type="text"
                             placeholder="Sertifikat PIRT"
                             value={productForm.pirt}
                             onChange={e => setProductForm({ ...productForm, pirt: e.target.value })}
-                            className="w-full p-1.5 bg-white border border-emerald-200 rounded text-[10px]"
+                            className="w-full px-2.5 py-1.5 bg-white border border-emerald-200 rounded text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none"
                           />
                         </div>
-                        <div className="space-y-0.5">
-                          <label className="text-[10px] text-emerald-800 font-semibold">Ijin BPOM RI</label>
+                        <div className="space-y-1">
+                          <label className="block text-[10px] text-emerald-800 font-semibold uppercase tracking-wider">Ijin BPOM RI</label>
                           <input
                             type="text"
                             placeholder="Sertifikasi BPOM"
                             value={productForm.bpom}
                             onChange={e => setProductForm({ ...productForm, bpom: e.target.value })}
-                            className="w-full p-1.5 bg-white border border-emerald-200 rounded text-[10px]"
+                            className="w-full px-2.5 py-1.5 bg-white border border-emerald-200 rounded text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none"
                           />
                         </div>
-                        <div className="space-y-0.5 sm:col-span-2">
-                          <label className="text-[10px] text-emerald-800 font-semibold">PKRT (Perbekalan Kesehatan RT)</label>
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="block text-[10px] text-emerald-800 font-semibold uppercase tracking-wider">PKRT (Perbekalan Kesehatan Rumah Tangga)</label>
                           <input
                             type="text"
                             placeholder="Nomor Ijin PKRT"
                             value={productForm.pkrt}
                             onChange={e => setProductForm({ ...productForm, pkrt: e.target.value })}
-                            className="w-full p-1.5 bg-white border border-emerald-200 rounded text-[10px]"
+                            className="w-full px-2.5 py-1.5 bg-white border border-emerald-200 rounded text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1 col-span-2">
-                      <label className="font-semibold text-gray-700">Deskripsi Lengkap Produk</label>
+                    {/* Deskripsi */}
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Deskripsi Lengkap Produk</label>
                       <textarea
                         rows={3}
                         required
                         placeholder="Jelaskan spesifikasi detail, bahan utama, keunggulan, jangka simpan produk Anda..."
                         value={productForm.description}
                         onChange={e => setProductForm({ ...productForm, description: e.target.value })}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-xs"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition outline-none bg-slate-50/30"
                       />
                     </div>
                   </div>
 
-                  <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
+                  <div className="flex flex-col sm:flex-row gap-2 justify-end pt-3 border-t border-gray-150">
                     <button
                       type="button"
                       onClick={() => setShowProductModal(false)}
-                      className="px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-bold"
+                      className="w-full sm:w-auto px-5 py-2.5 border border-slate-200 rounded-xl text-gray-600 hover:bg-slate-50 font-bold transition order-2 sm:order-1"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold"
+                      className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md shadow-emerald-600/10 transition order-1 sm:order-2"
                     >
-                      Simpan Produk
+                      {editingProduct ? 'Simpan Perubahan' : 'Tambah Produk'}
                     </button>
                   </div>
                 </form>
