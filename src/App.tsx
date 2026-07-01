@@ -74,8 +74,8 @@ export default function App() {
     email: '',
     name: '',
     phone: '',
-    address: 'Dusun Krajan, Desa Tegalsari Centro',
-    kecamatan: 'Tegalsari',
+    address: 'Dusun Bleder, Desa Tegalsari',
+    kecamatan: 'Kandeman',
     village: 'Tegalsari',
     latitude: -8.4357,
     longitude: 114.1293
@@ -123,64 +123,54 @@ export default function App() {
   // Synchronize app icon, splash screen, and PWA manifest dynamically
   useEffect(() => {
     if (appSettings) {
-      // Dynamic app icon
+      // Dynamic app icon with cache busting to force browser refresh
+      const cacheBust = appSettings.app_icon_url ? `?t=${encodeURIComponent(appSettings.app_icon_url.substring(appSettings.app_icon_url.length - 10))}` : '';
       const iconUrl = appSettings.app_icon_url || '/icon.svg';
+      const pngIconUrl = appSettings.app_icon_url ? appSettings.app_icon_url : '/icon.png';
       
-      const linkIcon = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      const linkIcon = document.querySelector("link[rel='icon'][type='image/svg+xml']") as HTMLLinkElement;
       if (linkIcon) {
         linkIcon.href = iconUrl;
-      } else {
-        const link = document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/svg+xml';
-        link.href = iconUrl;
-        document.head.appendChild(link);
+      }
+      const linkPngIcon = document.querySelector("link[rel='icon'][type='image/png']") as HTMLLinkElement;
+      if (linkPngIcon) {
+        linkPngIcon.href = pngIconUrl;
       }
 
       const appleIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
       if (appleIcon) {
-        appleIcon.href = iconUrl;
-      } else {
-        const link = document.createElement('link');
-        link.rel = 'apple-touch-icon';
-        link.href = iconUrl;
-        document.head.appendChild(link);
+        appleIcon.href = pngIconUrl;
       }
 
       // Dynamic splash screen
-      const splashUrl = appSettings.splash_screen_url || '/splash.svg';
+      const splashUrl = appSettings.splash_screen_url || '/splash.png';
       const appleSplash = document.querySelector("link[rel='apple-touch-startup-image']") as HTMLLinkElement;
       if (appleSplash) {
         appleSplash.href = splashUrl;
-      } else {
-        const link = document.createElement('link');
-        link.rel = 'apple-touch-startup-image';
-        link.href = splashUrl;
-        document.head.appendChild(link);
       }
 
-      // Dynamic manifest
+      // Dynamic manifest containing multiple formats
       const baseManifest = {
         name: appSettings.app_name || "PASAR UMKM TEGALSARI",
         short_name: appSettings.app_name || "PASAR UMKM TEGALSARI",
         description: "Marketplace Multivendor UMKM Desa Tegalsari, Kabupaten Batang",
         icons: [
           {
-            src: appSettings.app_icon_url || "/icon.svg",
+            src: pngIconUrl,
             sizes: "192x192",
-            type: appSettings.app_icon_url?.startsWith('data:image/svg') || !appSettings.app_icon_url ? "image/svg+xml" : "image/png",
+            type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: appSettings.app_icon_url || "/icon.svg",
+            src: pngIconUrl,
             sizes: "512x512",
-            type: appSettings.app_icon_url?.startsWith('data:image/svg') || !appSettings.app_icon_url ? "image/svg+xml" : "image/png",
+            type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: appSettings.app_icon_url || "/icon.svg",
+            src: iconUrl,
             sizes: "any",
-            type: appSettings.app_icon_url?.startsWith('data:image/svg') || !appSettings.app_icon_url ? "image/svg+xml" : "image/png",
+            type: "image/svg+xml",
             purpose: "any maskable"
           }
         ],
