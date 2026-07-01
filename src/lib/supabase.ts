@@ -1392,7 +1392,9 @@ export const db = {
           marketing_pelatihan_content: mergedHydrated.marketing_pelatihan_content,
           marketing_pelatihan_image: mergedHydrated.marketing_pelatihan_image,
           marketing_whatsapp_content: mergedHydrated.marketing_whatsapp_content,
-          marketing_whatsapp_image: mergedHydrated.marketing_whatsapp_image
+          marketing_whatsapp_image: mergedHydrated.marketing_whatsapp_image,
+          app_icon_url: mergedHydrated.app_icon_url,
+          splash_screen_url: mergedHydrated.splash_screen_url
         };
 
         let cleanAboutUs = mergedHydrated.about_us || '';
