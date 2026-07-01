@@ -1773,6 +1773,194 @@ Gunakan format JSON respon berikut:
     }
   });
 
+function parseAboutUsMetadata(aboutUs: string) {
+  if (!aboutUs) return null;
+  const tagStartIndex = aboutUs.lastIndexOf('[METADATA_JSON:');
+  if (tagStartIndex !== -1) {
+    const tagContentStart = tagStartIndex + '[METADATA_JSON:'.length;
+    const lastBracketIndex = aboutUs.lastIndexOf(']');
+    if (lastBracketIndex > tagContentStart) {
+      const jsonStr = aboutUs.substring(tagContentStart, lastBracketIndex).trim();
+      try {
+        return JSON.parse(jsonStr);
+      } catch (e) {}
+    }
+  }
+  return null;
+}
+
+// Dynamic PWA manifest handler
+app.get("/manifest.json", async (req, res, next) => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+  let appName = "Pasar UMKM Tegalsari";
+  let appIconUrl = "/icon.svg";
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/app_settings?id=eq.global_settings&select=*`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const settings = data[0];
+          appName = settings.app_name || appName;
+          const metadata = parseAboutUsMetadata(settings.about_us);
+          if (metadata && metadata.app_icon_url) {
+            appIconUrl = metadata.app_icon_url;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching manifest settings:', e);
+    }
+  }
+
+  const isSvg = appIconUrl.startsWith('data:image/svg') || appIconUrl.endsWith('.svg');
+  const iconType = isSvg ? 'image/svg+xml' : 'image/png';
+
+  const manifest = {
+    short_name: appName,
+    name: appName,
+    description: "Marketplace Multivendor UMKM Desa Tegalsari, Kabupaten Batang",
+    icons: [
+      {
+        src: "/icon.svg",
+        type: iconType,
+        sizes: "192x192",
+        purpose: "any maskable"
+      },
+      {
+        src: "/icon.svg",
+        type: iconType,
+        sizes: "512x512",
+        purpose: "any maskable"
+      },
+      {
+        src: "/icon.svg",
+        type: iconType,
+        sizes: "any",
+        purpose: "any maskable"
+      }
+    ],
+    start_url: "/",
+    background_color: "#cbe605",
+    theme_color: "#cbe605",
+    display: "standalone",
+    orientation: "portrait"
+  };
+
+  res.setHeader('Content-Type', 'application/json');
+  res.json(manifest);
+});
+
+// Dynamic App Icon handler
+app.get("/icon.svg", async (req, res, next) => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/app_settings?id=eq.global_settings&select=*`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const settings = data[0];
+          const metadata = parseAboutUsMetadata(settings.about_us);
+          if (metadata && metadata.app_icon_url) {
+            const url = metadata.app_icon_url;
+            if (url.startsWith('data:')) {
+              const matches = url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+              if (matches && matches.length === 3) {
+                const contentType = matches[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              }
+            } else if (url.startsWith('http://') || url.startsWith('https://')) {
+              try {
+                const imgRes = await fetch(url);
+                const contentType = imgRes.headers.get('content-type') || 'image/svg+xml';
+                const buffer = Buffer.from(await imgRes.arrayBuffer());
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              } catch (e) {
+                return res.redirect(url);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error serving dynamic icon:', e);
+    }
+  }
+  next();
+});
+
+// Dynamic Splash Screen handler
+app.get("/splash.svg", async (req, res, next) => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/app_settings?id=eq.global_settings&select=*`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const settings = data[0];
+          const metadata = parseAboutUsMetadata(settings.about_us);
+          if (metadata && metadata.splash_screen_url) {
+            const url = metadata.splash_screen_url;
+            if (url.startsWith('data:')) {
+              const matches = url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+              if (matches && matches.length === 3) {
+                const contentType = matches[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              }
+            } else if (url.startsWith('http://') || url.startsWith('https://')) {
+              try {
+                const imgRes = await fetch(url);
+                const contentType = imgRes.headers.get('content-type') || 'image/svg+xml';
+                const buffer = Buffer.from(await imgRes.arrayBuffer());
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              } catch (e) {
+                return res.redirect(url);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error serving dynamic splash:', e);
+    }
+  }
+  next();
+});
+
 async function startServer() {
   // Define Vite middleware configuration or Static files
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
