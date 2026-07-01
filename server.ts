@@ -1795,7 +1795,6 @@ app.get("/manifest.json", async (req, res, next) => {
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   let appName = "Pasar UMKM Tegalsari";
-  let appIconUrl = "/icon.svg";
 
   if (supabaseUrl && supabaseKey) {
     try {
@@ -1810,10 +1809,6 @@ app.get("/manifest.json", async (req, res, next) => {
         if (data && data.length > 0) {
           const settings = data[0];
           appName = settings.app_name || appName;
-          const metadata = parseAboutUsMetadata(settings.about_us);
-          if (metadata && metadata.app_icon_url) {
-            appIconUrl = metadata.app_icon_url;
-          }
         }
       }
     } catch (e) {
@@ -1821,29 +1816,26 @@ app.get("/manifest.json", async (req, res, next) => {
     }
   }
 
-  const isSvg = appIconUrl.startsWith('data:image/svg') || appIconUrl.endsWith('.svg');
-  const iconType = isSvg ? 'image/svg+xml' : 'image/png';
-
   const manifest = {
     short_name: appName,
     name: appName,
     description: "Marketplace Multivendor UMKM Desa Tegalsari, Kabupaten Batang",
     icons: [
       {
-        src: "/icon.svg",
-        type: iconType,
+        src: "/icon.png",
+        type: "image/png",
         sizes: "192x192",
         purpose: "any maskable"
       },
       {
-        src: "/icon.svg",
-        type: iconType,
+        src: "/icon.png",
+        type: "image/png",
         sizes: "512x512",
         purpose: "any maskable"
       },
       {
         src: "/icon.svg",
-        type: iconType,
+        type: "image/svg+xml",
         sizes: "any",
         purpose: "any maskable"
       }
@@ -1857,6 +1849,58 @@ app.get("/manifest.json", async (req, res, next) => {
 
   res.setHeader('Content-Type', 'application/json');
   res.json(manifest);
+});
+
+// Dynamic App Icon PNG handler
+app.get("/icon.png", async (req, res, next) => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/app_settings?id=eq.global_settings&select=*`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const settings = data[0];
+          const metadata = parseAboutUsMetadata(settings.about_us);
+          if (metadata && metadata.app_icon_url) {
+            const url = metadata.app_icon_url;
+            if (url.startsWith('data:')) {
+              const matches = url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+              if (matches && matches.length === 3) {
+                const contentType = matches[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              }
+            } else if (url.startsWith('http://') || url.startsWith('https://')) {
+              try {
+                const imgRes = await fetch(url);
+                const contentType = imgRes.headers.get('content-type') || 'image/png';
+                const buffer = Buffer.from(await imgRes.arrayBuffer());
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              } catch (e) {
+                return res.redirect(url);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error serving dynamic PNG icon:', e);
+    }
+  }
+  // Fallback to serving public icon.svg as png or redirect
+  res.redirect('/icon.svg');
 });
 
 // Dynamic App Icon handler
@@ -1908,6 +1952,57 @@ app.get("/icon.svg", async (req, res, next) => {
     }
   }
   next();
+});
+
+// Dynamic Splash Screen PNG handler
+app.get("/splash.png", async (req, res, next) => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/app_settings?id=eq.global_settings&select=*`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const settings = data[0];
+          const metadata = parseAboutUsMetadata(settings.about_us);
+          if (metadata && metadata.splash_screen_url) {
+            const url = metadata.splash_screen_url;
+            if (url.startsWith('data:')) {
+              const matches = url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+              if (matches && matches.length === 3) {
+                const contentType = matches[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              }
+            } else if (url.startsWith('http://') || url.startsWith('https://')) {
+              try {
+                const imgRes = await fetch(url);
+                const contentType = imgRes.headers.get('content-type') || 'image/png';
+                const buffer = Buffer.from(await imgRes.arrayBuffer());
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+              } catch (e) {
+                return res.redirect(url);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error serving dynamic PNG splash:', e);
+    }
+  }
+  res.redirect('/splash.svg');
 });
 
 // Dynamic Splash Screen handler
